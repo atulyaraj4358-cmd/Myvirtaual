@@ -195,3 +195,29 @@ $("#screen").dataset.wp = store.get("wp", "0");
 if (window.extraApps) apps.push(...window.extraApps);
 buildHome();
 tick();
+// Android Haptic Feedback & Ripple Effect
+document.addEventListener('pointerdown', function(e) {
+    const target = e.target.closest('.icon, .btn, .card, button, .pill');
+    if (!target) return;
+    
+    // 1. Phone Vibrate (Haptic)
+    if (navigator.vibrate) navigator.vibrate(15);
+
+    // 2. Ripple Effect
+    const circle = document.createElement('span');
+    const diameter = Math.max(target.clientWidth, target.clientHeight);
+    const radius = diameter / 2;
+    circle.style.width = circle.style.height = `${diameter}px`;
+    circle.style.left = `${e.clientX - target.getBoundingClientRect().left - radius}px`;
+    circle.style.top = `${e.clientY - target.getBoundingClientRect().top - radius}px`;
+    circle.classList.add('ripple');
+    
+    const ripple = target.querySelector('.ripple');
+    if (ripple) ripple.remove();
+    
+    target.style.position = 'relative';
+    target.style.overflow = 'hidden';
+    target.appendChild(circle);
+    
+    setTimeout(() => circle.remove(), 600);
+});
