@@ -50,14 +50,45 @@ function closeApp() {
 function showRecents() {
   const r = $("#recents");
   if (!r.hidden) { r.hidden = true; return; }
+  
   r.innerHTML = "";
-  if (!recent.length) r.append(el('<p class="mute">Koi recent app nahi.</p>'));
-  recent.forEach((id) => {
-    const a = apps.find((x) => x.id === id);
-    const c = el(`<button class="card">${a.icon} ${a.name}</button>`);
-    c.addEventListener("click", () => openApp(id));
-    r.append(c);
-  });
+  if (!recent.length) {
+    r.append(el('<p class="mute" style="margin-top: 50px;">Koi recent app nahi.</p>'));
+  } else {
+    recent.forEach((id) => {
+      const a = apps.find((x) => x.id === id);
+      if (!a) return;
+      
+      // Naya 3D Card banaya
+      const c = el(`
+        <div class="recent-card">
+          <button class="close-recent">✕</button>
+          <i style="background:${a.bg}">${a.icon}</i>
+          <span>${a.name}</span>
+        </div>
+      `);
+      
+      // Card pe click karne se app khulega
+      c.addEventListener("click", (e) => {
+        if (e.target.classList.contains('close-recent')) return;
+        openApp(id);
+      });
+
+      // Close button dabane se app recent se hat jayega (Swipe jaisa effect)
+      c.querySelector('.close-recent').addEventListener("click", (e) => {
+        e.stopPropagation();
+        c.style.transform = "translateX(100%) rotate(10deg)";
+        c.style.opacity = "0";
+        setTimeout(() => {
+          recent = recent.filter(x => x !== id);
+          c.remove();
+          if(recent.length === 0) r.append(el('<p class="mute">Koi recent app nahi.</p>'));
+        }, 250);
+      });
+
+      r.append(c);
+    });
+  }
   r.hidden = false;
 }
 $("#homebtn").addEventListener("click", () => { closeApp(); $("#recents").hidden = true; });
