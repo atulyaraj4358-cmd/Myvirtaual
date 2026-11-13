@@ -68,6 +68,7 @@ input[type=file]{color:var(--fg)}
 #torch{position:absolute;inset:0;z-index:7;background:#fff;color:#111;display:grid;place-items:center;text-align:center;padding:20px;cursor:pointer}
 #torch[hidden]{display:none}
 @media(prefers-reduced-motion:reduce){#cc,#cc .sheet,#lock{transition:none}}
+[hidden] { display: none !important; }
 .scard{display:flex;gap:12px;align-items:center;background:var(--card);padding:12px;border-radius:16px}
 .scard i{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;font-size:24px;font-style:normal;flex:none}
 .scard div{flex:1;min-width:0}
