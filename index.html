@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Web Android</title>
+<style>
+:root{--bg:#0e1116;--fg:#fff;--card:#1b2029;--mute:#8d99a8;--accent:#3ddc84}
+body.light{--bg:#f2f4f7;--fg:#16202c;--card:#fff;--mute:#5b6b7d}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{display:grid;place-items:center;background:#05070a;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+#phone{width:min(390px,100vw);height:min(820px,100dvh);background:var(--bg);color:var(--fg);border-radius:38px;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 0 0 8px #151a21,0 30px 80px rgba(0,0,0,.6)}
+@media(max-width:500px){#phone{width:100vw;height:100dvh;border-radius:0;box-shadow:none}}
+#status{display:flex;justify-content:space-between;padding:calc(8px + env(safe-area-inset-top)) 22px 6px;font-size:13px;font-weight:600;background:var(--bg);z-index:3}
+#screen{flex:1;position:relative;overflow:hidden;background:linear-gradient(160deg,#1f3a5f,#0e1116)}
+#screen[data-wp="1"]{background:linear-gradient(160deg,#5b2a6e,#1b0f2b)}
+#screen[data-wp="2"]{background:linear-gradient(160deg,#0f6b4a,#07251c)}
+body.light #screen{filter:none}
+#home{position:absolute;inset:0;padding:20px 14px;display:grid;grid-template-columns:repeat(4,1fr);align-content:start;gap:22px 6px;color:#fff;overflow:auto}
+.widget{grid-column:1/-1;padding:18px 6px 10px}
+.widget b{display:block;font-size:56px;font-weight:300;line-height:1}
+.widget span{opacity:.8}
+.icon{background:none;border:0;display:grid;justify-items:center;gap:6px;font-size:12px;color:#fff;padding:0}
+.icon i{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;font-size:26px;font-style:normal}
+#app,#recents{position:absolute;inset:0;background:var(--bg);display:flex;flex-direction:column;animation:up .2s ease-out}
+#recents{background:rgba(0,0,0,.78);padding:20px;gap:12px;overflow:auto;color:#fff}
+@keyframes up{from{transform:translateY(24px);opacity:0}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important}}
+.appbar{padding:14px 18px;font-size:20px;font-weight:600}
+.body{flex:1;overflow:auto;padding:0 18px 18px;display:flex;flex-direction:column;gap:12px}
+.big{font-size:60px;font-weight:300;text-align:center;margin-top:20px}
+.mid{font-size:36px;text-align:center;font-variant-numeric:tabular-nums}
+.row{display:flex;gap:10px;justify-content:center}
+.row button,.pill{padding:12px 20px;border-radius:24px;border:0;background:var(--card);font-weight:600}
+.row button.on{background:var(--accent);color:#07210f}
+#disp{font-size:44px;text-align:right;padding:24px 4px 10px;min-height:96px;word-break:break-all;margin-top:auto}
+.keys{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.keys button{height:62px;border-radius:20px;border:0;background:var(--card);font-size:22px}
+.keys .op{background:var(--accent);color:#07210f}
+.keys .z{grid-column:span 2}
+textarea{flex:1;border:0;border-radius:16px;background:var(--card);color:var(--fg);padding:14px;font:inherit;resize:none}
+video{width:100%;border-radius:16px;background:#000;flex:1;min-height:0;object-fit:cover}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.grid img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px}
+form{display:flex;gap:8px}
+input[type=text],input[type=url]{flex:1;padding:12px;border-radius:14px;border:0;background:var(--card);color:var(--fg);font:inherit;min-width:0}
+iframe{flex:1;border:0;border-radius:12px;background:#fff;width:100%}
+.mute{color:var(--mute);margin:0}
+#nav{display:flex;justify-content:space-around;padding:6px 0 calc(10px + env(safe-area-inset-bottom));background:var(--bg)}
+#nav button{background:none;border:0;font-size:22px;padding:6px 28px}
+.card{background:var(--card);border-radius:18px;padding:16px;text-align:left;border:0;width:100%;color:var(--fg);font-size:17px}
+#lock{position:absolute;inset:0;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;color:#fff;background:linear-gradient(160deg,#16253d,#06080c);cursor:pointer;transition:transform .3s ease}
+#lock b{font-size:72px;font-weight:200;line-height:1}
+#lock p{margin-top:40px;opacity:.6;font-size:14px}
+input[type=file]{color:var(--fg)}
+.grid a{display:block}
+#phone{position:relative}
+#notch{position:absolute;top:7px;left:50%;transform:translateX(-50%);width:78px;height:22px;background:#000;border-radius:14px;z-index:10;pointer-events:none}
+#notch::after{content:"";position:absolute;right:10px;top:7px;width:8px;height:8px;border-radius:50%;background:#14213a}
+#status{cursor:pointer;touch-action:none}
+#cc{position:absolute;inset:0;z-index:6;background:rgba(0,0,0,.5);opacity:0;pointer-events:none;transition:opacity .2s}
+#cc.open{opacity:1;pointer-events:auto}
+#cc .sheet{background:var(--card);color:var(--fg);padding:16px 16px 10px;border-radius:0 0 28px 28px;transform:translateY(-100%);transition:transform .25s ease}
+#cc.open .sheet{transform:none}
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px}
+.tile{border:0;border-radius:18px;background:rgba(127,127,127,.18);padding:10px 2px;display:grid;justify-items:center;gap:4px;font-size:11px;color:var(--fg)}
+.tile i{font-style:normal;font-size:22px}
+.tile.on{background:var(--accent);color:#07210f}
+.sl{display:flex;gap:10px;align-items:center;margin:8px 0}
+.sl input{flex:1;accent-color:var(--accent)}
+.grab{width:44px;height:5px;border-radius:3px;background:var(--mute);margin:10px auto 2px;opacity:.6}
+#torch{position:absolute;inset:0;z-index:7;background:#fff;color:#111;display:grid;place-items:center;text-align:center;padding:20px;cursor:pointer}
+#torch[hidden]{display:none}
+@media(prefers-reduced-motion:reduce){#cc,#cc .sheet,#lock{transition:none}}
+.scard{display:flex;gap:12px;align-items:center;background:var(--card);padding:12px;border-radius:16px}
+.scard i{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;font-size:24px;font-style:normal;flex:none}
+.scard div{flex:1;min-width:0}
+.scard small{display:block;color:var(--mute);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.scard button{border:0;border-radius:18px;padding:8px 16px;background:var(--accent);color:#07210f;font-weight:600}
+.scard button.rm{background:rgba(127,127,127,.25);color:var(--fg)}
+form[style*="column"] input{flex:none}
+/* realism */
+#sr{display:flex;align-items:center;gap:6px}
+#bi{width:22px;height:11px;border:1.5px solid currentColor;border-radius:3px;position:relative;padding:1px;display:inline-block}
+#bi::after{content:"";position:absolute;right:-4px;top:2.5px;width:2px;height:4px;background:currentColor;border-radius:0 2px 2px 0}
+#bi i{display:block;height:100%;background:currentColor;border-radius:1px;width:100%}
+.sb{position:absolute;border:0;padding:0;background:#2b3644;z-index:12;border-radius:3px}
+#pw{right:0;top:150px;width:4px;height:60px}
+#vu{left:0;top:130px;width:4px;height:44px}
+#vd{left:0;top:184px;width:4px;height:44px}
+@media(max-width:500px){.sb{display:none}}
+#off{position:absolute;inset:0;background:#000;z-index:25;cursor:pointer}
+#off[hidden]{display:none}
+#vp{position:absolute;left:12px;top:70px;width:34px;height:140px;background:rgba(30,30,30,.9);border-radius:18px;z-index:9;display:flex;align-items:flex-end;overflow:hidden;opacity:0;transition:opacity .2s;pointer-events:none}
+#vp.on{opacity:1}
+#vp i{width:100%;background:#fff;display:block;height:100%}
+.hu{position:absolute;top:8px;left:10px;right:10px;z-index:8;display:flex;gap:10px;align-items:center;background:var(--card);color:var(--fg);border:0;border-radius:20px;padding:12px 14px;text-align:left;box-shadow:0 8px 24px rgba(0,0,0,.4);animation:hu .35s cubic-bezier(.2,.8,.2,1)}
+@keyframes hu{from{transform:translateY(-120%)}}
+.hu span{font-size:24px}.hu div{flex:1;min-width:0}.hu small,.nc small{display:block;color:var(--mute)}
+#nl{display:grid;gap:8px;margin-bottom:12px}
+.nc{display:flex;gap:10px;align-items:center;background:rgba(127,127,127,.15);border:0;border-radius:16px;padding:10px 12px;color:var(--fg);text-align:left;font-size:13px}
+.nc span{font-size:22px}
+#dock{position:absolute;left:10px;right:10px;bottom:10px;z-index:0;display:grid;gap:10px}
+#dock .srch{border:0;border-radius:24px;background:rgba(255,255,255,.18);color:#fff;padding:12px 16px;text-align:left;backdrop-filter:blur(8px)}
+#dock .row2{display:flex;justify-content:space-around;background:rgba(255,255,255,.14);border-radius:28px;padding:10px;backdrop-filter:blur(10px)}
+#home{padding-bottom:160px}
+#app,#recents{z-index:1}
+@keyframes openapp{from{transform:scale(.88);opacity:0}}
+#app{animation:openapp .22s cubic-bezier(.2,.8,.2,1)}
+#boot{position:absolute;inset:0;z-index:30;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;color:#fff;animation:bootout .5s 2.4s forwards}
+#boot p{margin:0;letter-spacing:.35em;font-size:18px;color:#3ddc84}
+#boot svg{animation:pulse 1.2s ease-in-out infinite}
+.bbar{width:120px;height:3px;background:#222;border-radius:2px;overflow:hidden}
+.bbar i{display:block;height:100%;background:#3ddc84;animation:load 2.3s ease-out forwards}
+@keyframes bootout{to{opacity:0;visibility:hidden}}
+@keyframes pulse{50%{opacity:.5}}
+@keyframes load{from{width:0}to{width:100%}}
+@media(prefers-reduced-motion:reduce){#boot{display:none}}
+
+[hidden]{display:none!important}
+/* wallpapers + browser */
+#screen{background:var(--wp,linear-gradient(160deg,#1f3a5f,#0e1116)) center/cover!important}
+#lock{background:var(--wp,linear-gradient(160deg,#16253d,#06080c)) center/cover!important}
+#lock::before{content:"";position:absolute;inset:0;background:rgba(0,0,0,.25)}
+#lock>*{position:relative}
+.icon,.widget{text-shadow:0 1px 3px rgba(0,0,0,.6)}
+.wgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:8px 0}
+.wsw{height:64px;border-radius:14px;border:2px solid rgba(255,255,255,.25);padding:0;cursor:pointer}
+.dials{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.dx{position:absolute;top:2px;right:2px;width:22px;height:22px;border-radius:50%;border:0;background:rgba(0,0,0,.45);color:#fff;font-size:11px;padding:0}
+#bf button.pill{flex:none}
+
+</style>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 512 512%27%3E%3Crect width=%27512%27 height=%27512%27 rx=%27110%27 fill=%27%230e1116%27/%3E%3Cpath d=%27M150 330a106 106 0 0 1 212 0z%27 fill=%27%233ddc84%27/%3E%3C/svg%3E">
+<meta name="theme-color" content="#0e1116">
+</head>
+<body>
+<div id="phone">
+  <div id="status"><span id="clock"></span><span id="batt"></span></div>
+  <div id="screen" data-wp="0">
+    <div id="home"></div>
+    <div id="app" hidden></div>
+    <div id="recents" hidden></div>
+  </div>
+  <nav id="nav">
+    <button id="back" aria-label="Back">&#9665;</button>
+    <button id="homebtn" aria-label="Home">&#9675;</button>
+    <button id="rec" aria-label="Recent apps">&#9633;</button>
+  </nav>
+  <div id="boot" aria-hidden="true"><svg width="84" height="84" viewBox="0 0 512 512"><path d="M150 330a106 106 0 0 1 212 0z" fill="#3ddc84"/><circle cx="212" cy="290" r="9" fill="#000"/><circle cx="300" cy="290" r="9" fill="#000"/><path d="M180 205l-26-40M332 205l26-40" stroke="#3ddc84" stroke-width="12" stroke-linecap="round"/></svg><p>ANDROID</p><span class="bbar"><i></i></span></div>
+</div>
+<script>
+/* Extra apps + lock screen. Loaded before app.js */
+window.extraApps = [
+  { id: "paint", name: "Paint", icon: "🎨", bg: "#ec4899", open: paintApp },
+  { id: "snake", name: "Snake", icon: "🐍", bg: "#16a34a", open: snakeApp },
+  { id: "cal", name: "Calendar", icon: "📅", bg: "#2563eb", open: calApp },
+  { id: "music", name: "Music", icon: "🎵", bg: "#f97316", open: musicApp }
+];
+
+function paintApp(b) {
+  b.innerHTML = '<canvas id="pc" width="360" height="440" style="width:100%;border-radius:16px;background:#fff;touch-action:none;flex:1;min-height:0"></canvas><div class="row" id="pcol"></div><div class="row"><button id="pclr">Clear</button><button id="psave">Save to Gallery</button></div>';
+  const c = $("#pc"), x = c.getContext("2d");
+  x.fillStyle = "#fff"; x.fillRect(0, 0, 360, 440);
+  x.lineWidth = 4; x.lineCap = "round"; x.strokeStyle = "#111";
+  ["#111", "#ef4444", "#22c55e", "#3b82f6", "#eab308"].forEach((col) => {
+    const k = el('<button aria-label="Color" style="width:36px;height:36px;padding:0;border-radius:50%;border:2px solid #fff;background:' + col + '"></button>');
+    k.addEventListener("click", () => { x.strokeStyle = col; });
+    $("#pcol").append(k);
+  });
+  let on = false;
+  const pt = (e) => { const r = c.getBoundingClientRect(); return [(e.clientX - r.left) * 360 / r.width, (e.clientY - r.top) * 440 / r.height]; };
+  c.addEventListener("pointerdown", (e) => { on = true; const [a, b2] = pt(e); x.beginPath(); x.moveTo(a, b2); });
+  c.addEventListener("pointermove", (e) => { if (!on) return; const [a, b2] = pt(e); x.lineTo(a, b2); x.stroke(); });
+  ["pointerup", "pointerleave"].forEach((n) => c.addEventListener(n, () => { on = false; }));
+  $("#pclr").addEventListener("click", () => { x.fillStyle = "#fff"; x.fillRect(0, 0, 360, 440); });
+  $("#psave").addEventListener("click", () => { photos.unshift(c.toDataURL("image/png")); $("#psave").textContent = "Saved"; });
+}
+
+function snakeApp(b) {
+  b.innerHTML = '<canvas id="sc" width="300" height="300" style="width:100%;border-radius:16px;background:var(--card)"></canvas><p class="mute" id="ss"></p><div class="row"><button data-d="U">▲</button></div><div class="row"><button data-d="L">◀</button><button data-d="D">▼</button><button data-d="R">▶</button></div>';
+  const N = 15, S = 20, x = $("#sc").getContext("2d");
+  const V = { U: [0, -1], D: [0, 1], L: [-1, 0], R: [1, 0] };
+  let sn, dir, food, score, over;
+  const spawn = () => { do { food = [Math.floor(Math.random() * N), Math.floor(Math.random() * N)]; } while (sn.some((s) => s[0] === food[0] && s[1] === food[1])); };
+  const reset = () => { sn = [[7, 7], [6, 7], [5, 7]]; dir = V.R; score = 0; over = false; spawn(); };
+  const draw = () => {
+    x.clearRect(0, 0, 300, 300);
+    x.fillStyle = "#ef4444"; x.fillRect(food[0] * S + 2, food[1] * S + 2, S - 4, S - 4);
+    x.fillStyle = "#3ddc84"; sn.forEach((s) => x.fillRect(s[0] * S + 1, s[1] * S + 1, S - 2, S - 2));
+    $("#ss").textContent = over ? "Game over. Koi bhi button dabao, restart." : "Score: " + score;
+  };
+  const step = () => {
+    if (over) return;
+    const h = [sn[0][0] + dir[0], sn[0][1] + dir[1]];
+    if (h[0] < 0 || h[1] < 0 || h[0] >= N || h[1] >= N || sn.some((s) => s[0] === h[0] && s[1] === h[1])) { over = true; draw(); return; }
+    sn.unshift(h);
+    if (h[0] === food[0] && h[1] === food[1]) { score++; spawn(); } else sn.pop();
+    draw();
+  };
+  const turn = (k) => {
+    if (over) { reset(); draw(); return; }
+    const d = V[k];
+    if (d && !(d[0] === -dir[0] && d[1] === -dir[1])) dir = d;
+  };
+  b.querySelectorAll("[data-d]").forEach((k) => k.addEventListener("click", () => turn(k.dataset.d)));
+  const key = (e) => { const m = { ArrowUp: "U", ArrowDown: "D", ArrowLeft: "L", ArrowRight: "R" }[e.key]; if (m) { e.preventDefault(); turn(m); } };
+  document.addEventListener("keydown", key);
+  reset(); draw();
+  const id = setInterval(step, 140);
+  return () => { clearInterval(id); document.removeEventListener("keydown", key); };
+}
+
+function calApp(b) {
+  let d = new Date(); d.setDate(1);
+  const draw = () => {
+    const today = new Date(), first = d.getDay(), days = new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate();
+    let h = '<div class="row"><button id="cp">‹</button><b style="align-self:center;min-width:150px;text-align:center">' + d.toLocaleDateString([], { month: "long", year: "numeric" }) + '</b><button id="cn">›</button></div><div class="keys" style="grid-template-columns:repeat(7,1fr);text-align:center;gap:6px">';
+    ["S", "M", "T", "W", "T", "F", "S"].forEach((w) => { h += '<span class="mute">' + w + "</span>"; });
+    for (let i = 0; i < first; i++) h += "<span></span>";
+    for (let i = 1; i <= days; i++) {
+      const t = i === today.getDate() && d.getMonth() === today.getMonth() && d.getFullYear() === today.getFullYear();
+      h += '<span style="padding:10px 0;border-radius:50%;' + (t ? "background:var(--accent);color:#07210f;font-weight:700" : "") + '">' + i + "</span>";
+    }
+    b.innerHTML = h + "</div>";
+    $("#cp").addEventListener("click", () => { d.setMonth(d.getMonth() - 1); draw(); });
+    $("#cn").addEventListener("click", () => { d.setMonth(d.getMonth() + 1); draw(); });
+  };
+  draw();
+}
+
+function musicApp(b) {
+  b.innerHTML = '<p class="mute">Apne phone/computer se gaana chuno.</p><input type="file" id="mf" accept="audio/*"><p id="mn"></p><audio id="ma" controls style="width:100%"></audio>';
+  let url = null;
+  $("#mf").addEventListener("change", (e) => {
+    const f = e.target.files[0]; if (!f) return;
+    if (url) URL.revokeObjectURL(url);
+    url = URL.createObjectURL(f);
+    $("#ma").src = url; $("#ma").play().catch(() => {}); $("#mn").textContent = f.name;
+  });
+  return () => { if (url) URL.revokeObjectURL(url); };
+}
+
+(function lockScreen() {
+  const l = document.createElement("div");
+  l.id = "lock";
+  l.innerHTML = '<b id="lt"></b><span id="ld"></span><p>Unlock karne ke liye tap karo</p>';
+  document.getElementById("screen").append(l);
+  const t = () => {
+    const d = new Date();
+    document.getElementById("lt").textContent = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    document.getElementById("ld").textContent = d.toLocaleDateString([], { weekday: "long", day: "numeric", month: "long" });
+  };
+  t(); setInterval(t, 10000);
+  l.addEventListener("click", () => { l.style.transform = "translateY(-100%)"; setTimeout(() => l.remove(), 300); });
+})();
+
+/* Notch + control centre */
+(function controlCenter() {
+  const g = (id) => document.getElementById(id);
+  const phone = g("phone"), screen = g("screen"), status = g("status");
+  const notch = document.createElement("div");
+  notch.id = "notch"; phone.append(notch);
+
+  const wrap = document.createElement("div");
+  wrap.id = "cc";
+  wrap.innerHTML = '<div class="sheet"><div class="tiles"></div><label class="sl">☀️<input type="range" id="br" min="30" max="100" value="100" aria-label="Brightness"></label><label class="sl">🔊<input type="range" id="vo" min="0" max="100" value="100" aria-label="Volume"></label><div class="grab"></div></div>';
+  screen.append(wrap);
+
+  const tl = document.createElement("div");
+  tl.id = "torch"; tl.hidden = true; tl.textContent = "Torch on hai. Band karne ke liye tap karo.";
+  screen.append(tl);
+
+  const defs = [["wifi", "📶", "Wi-Fi"], ["bt", "🔵", "Bluetooth"], ["air", "✈️", "Airplane"], ["torch", "🔦", "Torch"], ["dark", "🌙", "Dark"], ["rot", "🔄", "Rotate"], ["mute", "🔕", "Silent"], ["save", "🔋", "Saver"]];
+  const state = {}, btns = {};
+  let vol = 1;
+  const set = (k, on) => { state[k] = on; btns[k].classList.toggle("on", on); };
+  defs.forEach(([k, i, n]) => {
+    const b = document.createElement("button");
+    b.className = "tile"; b.innerHTML = "<i>" + i + "</i>" + n;
+    btns[k] = b; state[k] = false;
+    b.addEventListener("click", () => toggle(k));
+    wrap.querySelector(".tiles").append(b);
+  });
+
+  function toggle(k) {
+    const on = !state[k];
+    set(k, on);
+    if (k === "torch") tl.hidden = !on;
+    if (k === "dark") {
+      document.body.classList.toggle("light", !on);
+      try { localStorage.setItem("theme", on ? "dark" : "light"); } catch (e) {}
+    }
+    if (k === "mute") document.querySelectorAll("audio,video").forEach((m) => { m.muted = on; });
+    if (k === "air" && on) { set("wifi", false); set("bt", false); }
+  }
+  tl.addEventListener("click", () => toggle("torch"));
+
+  set("wifi", navigator.onLine);
+  window.addEventListener("online", () => set("wifi", true));
+  window.addEventListener("offline", () => set("wifi", false));
+
+  g("br").addEventListener("input", (e) => { screen.style.filter = "brightness(" + e.target.value / 100 + ")"; });
+  g("vo").addEventListener("input", (e) => {
+    vol = e.target.value / 100;
+    document.querySelectorAll("audio,video").forEach((m) => { m.volume = vol; });
+  });
+  document.addEventListener("play", (e) => {
+    const m = e.target;
+    if (m.volume !== undefined) { m.volume = vol; if (state.mute) m.muted = true; }
+  }, true);
+
+  const isOpen = () => wrap.classList.contains("open");
+  const open = (o) => {
+    wrap.classList.toggle("open", o);
+    if (o) set("dark", !document.body.classList.contains("light"));
+  };
+  let y0 = null, swiped = false;
+  status.addEventListener("pointerdown", (e) => { y0 = e.clientY; });
+  status.addEventListener("pointermove", (e) => { if (y0 !== null && e.clientY - y0 > 25) { open(true); swiped = true; y0 = null; } });
+  ["pointerup", "pointercancel"].forEach((n) => status.addEventListener(n, () => { y0 = null; }));
+  status.addEventListener("click", () => { if (swiped) { swiped = false; return; } open(!isOpen()); });
+  wrap.addEventListener("click", (e) => { if (e.target === wrap) open(false); });
+  g("back").addEventListener("click", (e) => { if (isOpen()) { open(false); e.stopImmediatePropagation(); } });
+  g("homebtn").addEventListener("click", () => open(false));
+})();
+
+</script>
+<script>
+/* Atulya Store + real apps. Loaded after extras.js, before app.js */
+(function () {
+  const sget = (k, d) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } };
+  const sset = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+  const mk = (t, c, txt) => { const e = document.createElement(t); if (c) e.className = c; if (txt !== undefined) e.textContent = txt; return e; };
+  const norm = (u) => { u = u.trim(); return /^https?:\/\//i.test(u) ? u : "https://" + u; };
+  let inst = sget("inst", ["yt", "maps", "wx"]), custom = sget("custom", []);
+
+  function webApp(b, url) {
+    const f = document.createElement("iframe");
+    f.title = "App"; f.allow = "camera; microphone; geolocation; fullscreen; clipboard-write; autoplay"; f.src = url;
+    const p = mk("p", "mute", "Khali dikhe toh ");
+    const a = mk("a", null, "browser mein kholo");
+    a.href = url; a.target = "_blank"; a.rel = "noopener"; a.style.color = "var(--accent)";
+    p.append(a, ".");
+    b.style.padding = "0 10px 10px"; b.append(f, p);
+  }
+
+  function ytApp(b) {
+    b.innerHTML = '<form><input type="text" id="yl" placeholder="YouTube link ya video ID" aria-label="YouTube link"><button class="pill">Play</button></form><div id="yv"></div><p class="mute" id="ym">Video ka link paste karo. YouTube search yahan available nahi hai.</p>';
+    b.querySelector("form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const v = b.querySelector("#yl").value.trim();
+      const m = v.match(/(?:v=|youtu\.be\/|embed\/|shorts\/|live\/)([\w-]{11})/) || v.match(/^([\w-]{11})$/);
+      const box = b.querySelector("#yv"); box.innerHTML = "";
+      if (!m) { b.querySelector("#ym").textContent = "Link sahi nahi hai."; return; }
+      const f = document.createElement("iframe");
+      f.title = "Video"; f.allow = "autoplay; fullscreen; picture-in-picture"; f.allowFullscreen = true;
+      f.style.aspectRatio = "16/9"; f.style.flex = "none";
+      f.src = "https://www.youtube-nocookie.com/embed/" + m[1] + "?autoplay=1&playsinline=1";
+      box.append(f); b.querySelector("#ym").textContent = "";
+    });
+  }
+
+  function mapsApp(b) {
+    b.innerHTML = '<form><input type="text" id="mq" placeholder="Jagah ya address search karo" aria-label="Search place"><button class="pill">Go</button></form><iframe id="mf2" title="Maps"></iframe>';
+    const f = b.querySelector("#mf2");
+    const go = (q) => { f.src = "https://maps.google.com/maps?q=" + encodeURIComponent(q) + "&output=embed"; };
+    go("India");
+    b.querySelector("form").addEventListener("submit", (e) => { e.preventDefault(); const q = b.querySelector("#mq").value.trim(); if (q) go(q); });
+  }
+
+  function weatherApp(b) {
+    b.innerHTML = '<form><input type="text" id="wc" placeholder="Sheher ka naam" aria-label="City"><button class="pill">Go</button></form><button class="card" id="wl">📍 Meri location</button><div id="wr"></div>';
+    const out = b.querySelector("#wr");
+    const WX = (c) => c === 0 ? ["☀️", "Saaf aasman"] : c <= 3 ? ["⛅", "Badal"] : c <= 48 ? ["🌫️", "Kohra"] : c <= 67 ? ["🌧️", "Baarish"] : c <= 77 ? ["❄️", "Barf"] : c <= 82 ? ["🌦️", "Fuhaar"] : ["⛈️", "Toofan"];
+    const show = async (lat, lon, name) => {
+      out.textContent = "Load ho raha hai...";
+      try {
+        const r = await fetch("https://api.open-meteo.com/v1/forecast?latitude=" + lat + "&longitude=" + lon + "&current=temperature_2m,apparent_temperature,relative_humidity_2m,wind_speed_10m,weather_code&daily=temperature_2m_max,temperature_2m_min&timezone=auto");
+        const d = await r.json(), c = d.current, w = WX(c.weather_code);
+        out.innerHTML = "";
+        const big = mk("div", "big", w[0] + " " + Math.round(c.temperature_2m) + "°");
+        const t = mk("div", "mid", name + " · " + w[1]); t.style.fontSize = "22px";
+        const info = mk("p", "mute", "Mehsoos: " + Math.round(c.apparent_temperature) + "° · Nami: " + c.relative_humidity_2m + "% · Hawa: " + c.wind_speed_10m + " km/h · Aaj: " + Math.round(d.daily.temperature_2m_min[0]) + "° se " + Math.round(d.daily.temperature_2m_max[0]) + "°");
+        info.style.textAlign = "center";
+        out.append(big, t, info);
+      } catch (e) { out.textContent = "Mausam load nahi hua. Internet check karo."; }
+    };
+    b.querySelector("form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const q = b.querySelector("#wc").value.trim(); if (!q) return;
+      out.textContent = "Dhoondh raha hoon...";
+      try {
+        const r = await fetch("https://geocoding-api.open-meteo.com/v1/search?count=1&name=" + encodeURIComponent(q));
+        const d = await r.json();
+        if (!d.results || !d.results.length) { out.textContent = "Sheher nahi mila."; return; }
+        show(d.results[0].latitude, d.results[0].longitude, d.results[0].name);
+      } catch (err) { out.textContent = "Search nahi ho paya. Internet check karo."; }
+    });
+    b.querySelector("#wl").addEventListener("click", () => {
+      if (!navigator.geolocation) { out.textContent = "Location support nahi hai."; return; }
+      navigator.geolocation.getCurrentPosition((p) => show(p.coords.latitude, p.coords.longitude, "Meri location"), () => { out.textContent = "Location ki permission nahi mili."; });
+    });
+  }
+
+  const CAT = [
+    { id: "yt", name: "YouTube", icon: "▶️", bg: "#dc2626", d: "Link daalo, video chalao", open: ytApp },
+    { id: "maps", name: "Maps", icon: "🗺️", bg: "#16a34a", d: "Koi bhi jagah search karo", open: mapsApp },
+    { id: "wx", name: "Weather", icon: "⛅", bg: "#0284c7", d: "Kisi bhi sheher ka mausam", open: weatherApp },
+    { id: "wiki", name: "Wikipedia", icon: "📚", bg: "#475569", d: "Encyclopedia", url: "https://en.m.wikipedia.org" },
+    { id: "dict", name: "Dictionary", icon: "📖", bg: "#7c3aed", d: "Wiktionary", url: "https://en.m.wiktionary.org" },
+    { id: "photopea", name: "Photopea", icon: "🖌️", bg: "#0f766e", d: "Photo editor", url: "https://www.photopea.com" },
+    { id: "draw", name: "Excalidraw", icon: "✏️", bg: "#6366f1", d: "Whiteboard", url: "https://excalidraw.com" },
+    { id: "meet", name: "Meet", icon: "📹", bg: "#0891b2", d: "Video call (Jitsi)", url: "https://meet.jit.si" },
+    { id: "windy", name: "Weather Map", icon: "🌪️", bg: "#2563eb", d: "Live hawa ka map", url: "https://embed.windy.com/embed2.html?lat=22&lon=79&zoom=4&level=surface&overlay=wind" }
+  ];
+
+  const toApp = (it) => ({ id: "i_" + it.id, name: it.name, icon: it.icon, bg: it.bg, open: it.open || ((b) => webApp(b, it.url)) });
+  const installed = () => [...CAT.filter((c) => inst.includes(c.id)), ...custom].map(toApp);
+  function refresh() {
+    for (let i = apps.length - 1; i >= 0; i--) if (apps[i].id.startsWith("i_")) apps.splice(i, 1);
+    apps.push(...installed());
+    buildHome(); tick();
+  }
+
+  function storeApp(b) {
+    b.innerHTML = '<form style="flex-direction:column"><input type="text" id="cn" placeholder="Naya app ka naam" aria-label="App name"><input type="text" id="cu" placeholder="Website link, jaise example.com" aria-label="Website link"><button class="pill">Add custom app</button></form><p class="mute" id="sm"></p><div id="sl" style="display:grid;gap:10px"></div>';
+    const list = b.querySelector("#sl");
+    const draw = () => {
+      list.innerHTML = "";
+      [...CAT, ...custom].forEach((it) => {
+        const on = it.custom || inst.includes(it.id);
+        const row = mk("div", "scard");
+        const i = mk("i", null, it.icon); i.style.background = it.bg;
+        const d = mk("div"); d.append(mk("b", null, it.name), mk("small", null, it.d || it.url));
+        const btn = mk("button", on ? "rm" : "", on ? "Remove" : "Install");
+        btn.addEventListener("click", () => {
+          if (it.custom) { custom = custom.filter((x) => x.id !== it.id); sset("custom", custom); }
+          else { inst = on ? inst.filter((x) => x !== it.id) : [...inst, it.id]; sset("inst", inst); }
+          refresh(); draw();
+        });
+        row.append(i, d, btn); list.append(row);
+      });
+    };
+    b.querySelector("form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const n = b.querySelector("#cn").value.trim(), u = b.querySelector("#cu").value.trim();
+      if (!n || !u) { b.querySelector("#sm").textContent = "Naam aur link dono daalo."; return; }
+      custom.push({ id: "c" + Date.now(), name: n, url: norm(u), icon: "🌐", bg: "#475569", custom: true });
+      sset("custom", custom); refresh(); draw();
+      b.querySelector("#cn").value = ""; b.querySelector("#cu").value = "";
+      b.querySelector("#sm").textContent = "Home screen par add ho gaya.";
+    });
+    draw();
+  }
+
+  window.extraApps.unshift({ id: "store", name: "Atulya Store", icon: "🛍️", bg: "#f43f5e", open: storeApp });
+  window.extraApps.push(...installed());
+})();
+
+</script>
+<script>
+const $ = (s) => document.querySelector(s);
+const store = {
+  get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+};
+const photos = [];
+let cleanup = null, recent = [];
+
+const apps = [
+  { id: "clock", name: "Clock", icon: "🕒", bg: "#4f8cff", open: clockApp },
+  { id: "calc", name: "Calculator", icon: "🧮", bg: "#f59e0b", open: calcApp },
+  { id: "notes", name: "Notes", icon: "📝", bg: "#eab308", open: notesApp },
+  { id: "camera", name: "Camera", icon: "📷", bg: "#ef4444", open: cameraApp },
+  { id: "gallery", name: "Gallery", icon: "🖼️", bg: "#a855f7", open: galleryApp },
+  { id: "browser", name: "Browser", icon: "🌐", bg: "#0ea5e9", open: browserApp },
+  { id: "settings", name: "Settings", icon: "⚙️", bg: "#64748b", open: settingsApp }
+];
+
+function el(html) { const t = document.createElement("template"); t.innerHTML = html.trim(); return t.content.firstChild; }
+
+/* ---------- shell ---------- */
+function buildHome() {
+  const h = $("#home");
+  h.innerHTML = "";
+  h.append(el('<div class="widget"><b id="wt"></b><span id="wd"></span></div>'));
+  apps.forEach((a) => {
+    const b = el(`<button class="icon"><i style="background:${a.bg}">${a.icon}</i>${a.name}</button>`);
+    b.addEventListener("click", () => openApp(a.id));
+    h.append(b);
+  });
+}
+function openApp(id) {
+  closeApp();
+  const a = apps.find((x) => x.id === id);
+  recent = [id, ...recent.filter((x) => x !== id)].slice(0, 6);
+  const box = $("#app");
+  box.innerHTML = "";
+  box.append(el(`<div class="appbar">${a.name}</div>`));
+  const body = el('<div class="body"></div>');
+  box.append(body);
+  box.hidden = false;
+  $("#recents").hidden = true;
+  cleanup = a.open(body) || null;
+}
+function closeApp() {
+  if (cleanup) { cleanup(); cleanup = null; }
+  $("#app").hidden = true;
+  $("#app").innerHTML = "";
+}
+function showRecents() {
+  const r = $("#recents");
+  if (!r.hidden) { r.hidden = true; return; }
+  r.innerHTML = "";
+  if (!recent.length) r.append(el('<p class="mute">Koi recent app nahi.</p>'));
+  recent.forEach((id) => {
+    const a = apps.find((x) => x.id === id);
+    const c = el(`<button class="card">${a.icon} ${a.name}</button>`);
+    c.addEventListener("click", () => openApp(id));
+    r.append(c);
+  });
+  r.hidden = false;
+}
+$("#homebtn").addEventListener("click", () => { closeApp(); $("#recents").hidden = true; });
+$("#back").addEventListener("click", () => {
+  if (!$("#recents").hidden) $("#recents").hidden = true;
+  else closeApp();
+});
+$("#rec").addEventListener("click", showRecents);
+
+function tick() {
+  const d = new Date();
+  const t = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  $("#clock").textContent = t;
+  $("#wt").textContent = t;
+  $("#wd").textContent = d.toLocaleDateString([], { weekday: "long", day: "numeric", month: "long" });
+}
+setInterval(tick, 10000);
+if (navigator.getBattery) {
+  navigator.getBattery().then((b) => {
+    const u = () => { $("#batt").textContent = Math.round(b.level * 100) + "%"; };
+    u(); b.addEventListener("levelchange", u);
+  }).catch(() => {});
+}
+
+/* ---------- apps ---------- */
+function clockApp(b) {
+  b.innerHTML = '<div class="big" id="ct"></div><div class="mid" id="sw">00:00.0</div><div class="row"><button id="s1">Start</button><button id="s2">Reset</button></div>';
+  let acc = 0, t0 = 0, run = false;
+  const fmt = (ms) => { const s = ms / 1000; return String(Math.floor(s / 60)).padStart(2, "0") + ":" + (s % 60).toFixed(1).padStart(4, "0"); };
+  const draw = () => {
+    $("#ct").textContent = new Date().toLocaleTimeString();
+    $("#sw").textContent = fmt(acc + (run ? Date.now() - t0 : 0));
+  };
+  const id = setInterval(draw, 100); draw();
+  $("#s1").addEventListener("click", () => {
+    if (run) { acc += Date.now() - t0; run = false; $("#s1").textContent = "Start"; $("#s1").classList.remove("on"); }
+    else { t0 = Date.now(); run = true; $("#s1").textContent = "Stop"; $("#s1").classList.add("on"); }
+  });
+  $("#s2").addEventListener("click", () => { acc = 0; t0 = Date.now(); draw(); });
+  return () => clearInterval(id);
+}
+
+function calcApp(b) {
+  b.innerHTML = '<div id="disp">0</div><div class="keys"></div>';
+  const keys = ["C", "⌫", "%", "÷", "7", "8", "9", "×", "4", "5", "6", "−", "1", "2", "3", "+", "0", ".", "="];
+  let e = "";
+  const disp = $("#disp");
+  const show = () => { disp.textContent = e || "0"; };
+  const calc = () => {
+    const x = e.replace(/÷/g, "/").replace(/×/g, "*").replace(/−/g, "-").replace(/%/g, "/100");
+    if (!/^[0-9+\-*/.() ]+$/.test(x)) return;
+    try {
+      const r = Function('"use strict";return (' + x + ")")();
+      e = Number.isFinite(r) ? String(Math.round(r * 1e10) / 1e10) : "Error";
+    } catch (err) { e = "Error"; }
+  };
+  keys.forEach((k) => {
+    const btn = el(`<button class="${"÷×−+=".includes(k) ? "op" : ""} ${k === "0" ? "z" : ""}">${k}</button>`);
+    btn.addEventListener("click", () => {
+      if (e === "Error") e = "";
+      if (k === "C") e = "";
+      else if (k === "⌫") e = e.slice(0, -1);
+      else if (k === "=") calc();
+      else e += k;
+      show();
+    });
+    b.querySelector(".keys").append(btn);
+  });
+}
+
+function notesApp(b) {
+  b.innerHTML = '<textarea id="n" placeholder="Yahan likho..."></textarea>';
+  const n = $("#n");
+  n.value = store.get("notes", "");
+  n.addEventListener("input", () => store.set("notes", n.value));
+}
+
+function cameraApp(b) {
+  b.innerHTML = '<video autoplay playsinline muted></video><div class="row"><button id="snap">Take photo</button></div><p class="mute" id="cm"></p>';
+  const v = b.querySelector("video");
+  let stream = null;
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    $("#cm").textContent = "Is browser mein camera support nahi hai.";
+  } else {
+    navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+      .then((s) => { stream = s; v.srcObject = s; })
+      .catch(() => { $("#cm").textContent = "Camera ki permission nahi mili. Browser settings mein allow karo."; });
+  }
+  $("#snap").addEventListener("click", () => {
+    if (!v.videoWidth) return;
+    const c = document.createElement("canvas");
+    c.width = v.videoWidth; c.height = v.videoHeight;
+    c.getContext("2d").drawImage(v, 0, 0);
+    photos.unshift(c.toDataURL("image/jpeg", 0.85));
+    $("#cm").textContent = "Photo Gallery mein save hui.";
+  });
+  return () => { if (stream) stream.getTracks().forEach((t) => t.stop()); };
+}
+
+function galleryApp(b) {
+  if (!photos.length) { b.innerHTML = '<p class="mute">Abhi koi photo nahi. Camera se photo lo.</p>'; return; }
+  b.innerHTML = '<div class="grid"></div>';
+  photos.forEach((p) => { const a = document.createElement("a"); a.href = p; a.download = "photo.png"; a.innerHTML = '<img alt="Photo" src="' + p + '">'; b.firstChild.append(a); });
+}
+
+function browserApp(b) {
+  b.innerHTML = '<form><input type="text" id="u" value="https://en.m.wikipedia.org" aria-label="Address"><button class="pill">Go</button></form><iframe id="f" title="Browser" src="https://en.m.wikipedia.org"></iframe><p class="mute">Kuch websites yahan nahi khulti, unki security ki wajah se.</p>';
+  b.querySelector("form").addEventListener("submit", (ev) => {
+    ev.preventDefault();
+    let u = $("#u").value.trim();
+    if (!u) return;
+    if (!/^https?:\/\//i.test(u)) u = "https://" + u;
+    $("#f").src = u;
+  });
+}
+
+function settingsApp(b) {
+  b.innerHTML = '<button class="card" id="th"></button><p class="mute">Wallpaper</p><div class="row"><button data-w="0">Blue</button><button data-w="1">Purple</button><button data-w="2">Green</button></div>';
+  const th = $("#th");
+  const label = () => { th.textContent = "Theme: " + (document.body.classList.contains("light") ? "Light" : "Dark"); };
+  label();
+  th.addEventListener("click", () => {
+    document.body.classList.toggle("light");
+    store.set("theme", document.body.classList.contains("light") ? "light" : "dark");
+    label();
+  });
+  b.querySelectorAll("[data-w]").forEach((x) => x.addEventListener("click", () => {
+    $("#screen").dataset.wp = x.dataset.w; store.set("wp", x.dataset.w);
+  }));
+}
+
+/* ---------- start ---------- */
+if (store.get("theme", "dark") === "light") document.body.classList.add("light");
+$("#screen").dataset.wp = store.get("wp", "0");
+if (window.extraApps) apps.push(...window.extraApps);
+buildHome();
+tick();
+
+</script>
+<script>
+/* Realism layer: status icons, dock, notifications, power/volume buttons, about phone. Loaded after app.js */
+(function () {
+  const q = (s) => document.querySelector(s);
+  const mk = (t, c, x) => { const e = document.createElement(t); if (c) e.className = c; if (x !== undefined) e.textContent = x; return e; };
+  const phone = q("#phone"), screen = q("#screen");
+
+  /* status bar icons */
+  const sr = mk("span"); sr.id = "sr";
+  sr.innerHTML = '<svg width="16" height="12" viewBox="0 0 16 12" aria-hidden="true"><rect x="0" y="8" width="3" height="4" rx="1" fill="currentColor"/><rect x="4.3" y="5.5" width="3" height="6.5" rx="1" fill="currentColor"/><rect x="8.6" y="3" width="3" height="9" rx="1" fill="currentColor"/><rect x="12.9" y="0" width="3" height="12" rx="1" fill="currentColor"/></svg><svg width="16" height="12" viewBox="0 0 16 12" aria-hidden="true"><path d="M1 4.5a10 10 0 0 1 14 0M3.5 7.2a6.4 6.4 0 0 1 9 0M6 9.9a2.8 2.8 0 0 1 4 0" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="8" cy="11" r="1" fill="currentColor"/></svg><span id="bi"><i></i></span>';
+  const batt = q("#batt");
+  batt.replaceWith(sr); sr.append(batt);
+  const bl = () => { const n = parseInt(batt.textContent, 10); q("#bi i").style.width = (isNaN(n) ? 100 : n) + "%"; };
+  bl(); setInterval(bl, 3000);
+
+  /* haptics */
+  document.addEventListener("click", (e) => { if (navigator.vibrate && e.target.closest("button,a")) navigator.vibrate(8); }, true);
+
+  /* heads-up banner */
+  function banner(icon, title, text, fn) {
+    const old = q(".hu"); if (old) old.remove();
+    const b = mk("button", "hu"); b.append(mk("span", null, icon));
+    const d = mk("div"); d.append(mk("b", null, title), mk("small", null, text)); b.append(d);
+    b.addEventListener("click", () => { b.remove(); fn(); });
+    screen.append(b); setTimeout(() => b.remove(), 4500);
+  }
+  const unlockBanner = (l) => l.addEventListener("click", () => setTimeout(() => banner("🛍️", "Atulya Store", "Naye apps aaye hain. Tap karke dekho.", () => openApp("store")), 1000));
+  const l0 = q("#lock"); if (l0) unlockBanner(l0);
+
+  function showLock() {
+    if (q("#lock")) return;
+    const l = mk("div"); l.id = "lock";
+    l.innerHTML = '<b id="lt"></b><span id="ld"></span><p>Unlock karne ke liye tap karo</p>';
+    screen.append(l);
+    const t = () => {
+      if (!l.isConnected) return;
+      const d = new Date();
+      l.querySelector("#lt").textContent = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      l.querySelector("#ld").textContent = d.toLocaleDateString([], { weekday: "long", day: "numeric", month: "long" });
+      setTimeout(t, 10000);
+    };
+    t();
+    l.addEventListener("click", () => { l.style.transform = "translateY(-100%)"; setTimeout(() => l.remove(), 300); });
+    unlockBanner(l);
+  }
+
+  /* power + volume buttons */
+  const side = (id, label) => { const b = mk("button", "sb"); b.id = id; b.setAttribute("aria-label", label); phone.append(b); return b; };
+  const off = mk("div"); off.id = "off"; off.hidden = true; phone.append(off);
+  side("pw", "Power").addEventListener("click", () => { if (off.hidden) off.hidden = false; else { off.hidden = true; showLock(); } });
+  off.addEventListener("click", () => { off.hidden = true; showLock(); });
+  const vp = mk("div"); vp.id = "vp"; vp.innerHTML = "<i></i>"; phone.append(vp);
+  let vt;
+  const vol = (d) => {
+    const s = q("#vo"); if (!s) return;
+    s.value = Math.max(0, Math.min(100, +s.value + d));
+    s.dispatchEvent(new Event("input"));
+    vp.firstChild.style.height = s.value + "%";
+    vp.classList.add("on"); clearTimeout(vt); vt = setTimeout(() => vp.classList.remove("on"), 1200);
+  };
+  side("vu", "Volume up").addEventListener("click", () => vol(10));
+  side("vd", "Volume down").addEventListener("click", () => vol(-10));
+
+  /* notifications in control centre */
+  const nl = mk("div"); nl.id = "nl";
+  [["🛍️", "Atulya Store", "Naye apps install karo", "store"], ["📷", "Camera", "Photo lo, Gallery mein dekho", "camera"], ["🎨", "Paint", "Drawing banao aur save karo", "paint"]].forEach(([ic, t, x, id]) => {
+    const c = mk("button", "nc"); c.append(mk("span", null, ic));
+    const d = mk("div"); d.append(mk("b", null, t), mk("small", null, x)); c.append(d);
+    c.addEventListener("click", () => { c.remove(); q("#cc").classList.remove("open"); openApp(id); });
+    nl.append(c);
+  });
+  q("#cc .sheet").prepend(nl);
+
+  /* dock + search pill */
+  const dock = mk("div"); dock.id = "dock";
+  const sp = mk("button", "srch", "🔍  Search"); sp.addEventListener("click", () => openApp("browser"));
+  const r2 = mk("div", "row2");
+  ["camera", "browser", "calc", "settings"].forEach((id) => {
+    const a = apps.find((x) => x.id === id); if (!a) return;
+    const bt = mk("button", "icon"); bt.setAttribute("aria-label", a.name);
+    const i = mk("i", null, a.icon); i.style.background = a.bg; bt.append(i);
+    bt.addEventListener("click", () => openApp(id)); r2.append(bt);
+  });
+  dock.append(sp, r2); screen.append(dock);
+
+  /* About phone inside Settings */
+  const st = apps.find((a) => a.id === "settings");
+  if (st) {
+    const orig = st.open;
+    st.open = function (b) {
+      const c = orig(b);
+      const h = mk("p", "mute", "About phone"); h.style.marginTop = "12px";
+      const box = mk("div", "card"); box.style.fontSize = "14px";
+      const row = (k, v) => { const r = mk("div"); r.style.cssText = "display:flex;justify-content:space-between;gap:12px;padding:6px 0"; r.append(mk("span", null, k), mk("b", null, v)); box.append(r); };
+      row("Device", "Atulya Phone"); row("Android", "14 (web)"); row("Screen", innerWidth + " × " + innerHeight);
+      row("Battery", batt.textContent || "N/A"); row("Internet", navigator.onLine ? "Connected" : "Offline");
+      if (navigator.storage && navigator.storage.estimate) navigator.storage.estimate().then((e) => row("Storage used", (e.usage / 1048576).toFixed(1) + " MB")).catch(() => {});
+      b.append(h, box);
+      return c;
+    };
+  }
+  setTimeout(() => { const bt = q("#boot"); if (bt) bt.remove(); }, 3200);
+})();
+
+</script>
+<script>
+/* Wallpapers + stronger browser. Loaded after realism.js */
+(function () {
+  const q = (s, r) => (r || document).querySelector(s);
+  const mk = (t, c, x) => { const e = document.createElement(t); if (c) e.className = c; if (x !== undefined) e.textContent = x; return e; };
+  const lget = (k, d) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } };
+  const lset = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+
+  /* ---------- wallpapers ---------- */
+  const WPS = [
+    ["Midnight", "linear-gradient(160deg,#1f3a5f,#0e1116)"],
+    ["Aurora", "radial-gradient(circle at 20% 15%,#ff7a59,transparent 45%),radial-gradient(circle at 85% 30%,#7c5cff,transparent 50%),radial-gradient(circle at 40% 90%,#00c2a8,transparent 55%),#101522"],
+    ["Sunset", "linear-gradient(180deg,#2b1055,#7597de 55%,#f6a56b)"],
+    ["Ocean", "linear-gradient(160deg,#0f2027,#203a43,#2c5364)"],
+    ["Neon", "radial-gradient(circle at 50% 0%,#3b82f6,transparent 55%),radial-gradient(circle at 0% 100%,#ec4899,transparent 50%),#0b0f19"],
+    ["Forest", "linear-gradient(160deg,#134e5e,#71b280)"],
+    ["Graphite", "linear-gradient(135deg,#232526,#414345)"],
+    ["Spectrum", "conic-gradient(from 200deg at 50% 60%,#1e3a8a,#7c3aed,#db2777,#f59e0b,#1e3a8a)"]
+  ];
+  const setWp = (v) => { document.documentElement.style.setProperty("--wp", v); store.set("wpv", v); };
+  document.documentElement.style.setProperty("--wp", store.get("wpv", WPS[0][1]));
+
+  function photoToWp(file, done) {
+    const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = () => {
+      const s = Math.min(1, 900 / Math.max(img.width, img.height));
+      const c = document.createElement("canvas");
+      c.width = Math.round(img.width * s); c.height = Math.round(img.height * s);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      done('url("' + c.toDataURL("image/jpeg", 0.75) + '")');
+    };
+    img.onerror = () => URL.revokeObjectURL(url);
+    img.src = url;
+  }
+
+  const st = apps.find((a) => a.id === "settings");
+  if (st) {
+    const prev = st.open;
+    st.open = function (bd) {
+      const c = prev(bd);
+      const old = bd.querySelector("[data-w]");
+      if (old) { const row = old.parentElement; if (row.previousElementSibling) row.previousElementSibling.remove(); row.remove(); }
+      const wrap = mk("div");
+      wrap.append(mk("p", "mute", "Wallpaper"));
+      const g = mk("div", "wgrid");
+      WPS.forEach(([n, v]) => { const s = mk("button", "wsw"); s.setAttribute("aria-label", n); s.style.background = v; s.addEventListener("click", () => setWp(v)); g.append(s); });
+      const up = mk("button", "card", "📁 Apni photo chuno");
+      const inp = document.createElement("input"); inp.type = "file"; inp.accept = "image/*"; inp.hidden = true;
+      up.addEventListener("click", () => inp.click());
+      inp.addEventListener("change", () => { if (inp.files[0]) photoToWp(inp.files[0], setWp); });
+      wrap.append(g, up, inp);
+      const th = bd.querySelector("#th");
+      if (th) th.after(wrap); else bd.prepend(wrap);
+      return c;
+    };
+  }
+
+  /* ---------- browser ---------- */
+  const DIALS = [["Google", "🔎", "https://www.google.com/webhp?igu=1"], ["Wikipedia", "📚", "https://en.m.wikipedia.org"], ["Dictionary", "📖", "https://en.m.wiktionary.org"], ["Photopea", "🖌️", "https://www.photopea.com"], ["Excalidraw", "✏️", "https://excalidraw.com"], ["Meet", "📹", "https://meet.jit.si"]];
+  const ENG = { Google: "https://www.google.com/search?igu=1&q=", Wikipedia: "https://en.m.wikipedia.org/w/index.php?search=" };
+
+  function browser(b) {
+    b.style.padding = "0 10px 10px"; b.style.gap = "8px";
+    let proxy = lget("b_proxy", ""), engine = lget("b_engine", "Google"), marks = lget("b_marks", []);
+    let hist = [], pos = -1, cur = "";
+    b.innerHTML = '<form id="bf"><input type="text" id="bu" placeholder="Search ya website address" aria-label="Address" autocapitalize="off" autocorrect="off" spellcheck="false"><button class="pill">Go</button></form><div class="row" id="bt" style="flex-wrap:wrap"></div><div id="bm"></div><p class="mute" id="bs"></p>';
+    const bu = q("#bu", b), bm = q("#bm", b), bs = q("#bs", b), bt = q("#bt", b);
+    bm.style.cssText = "flex:1;min-height:0;display:flex;flex-direction:column;overflow:auto;gap:10px";
+    const status = (t) => { bs.textContent = t; };
+    const btn = (label, aria, fn) => { const x = mk("button", "pill", label); x.setAttribute("aria-label", aria); x.style.padding = "8px 12px"; x.addEventListener("click", fn); bt.append(x); return x; };
+
+    const toURL = (raw) => {
+      raw = raw.trim(); if (!raw) return "";
+      if (/^https?:\/\//i.test(raw)) return raw;
+      if (!/\s/.test(raw) && /^[^\s\/]+\.[a-z]{2,}([\/:?#]\S*)?$/i.test(raw)) return "https://" + raw;
+      return ENG[engine] + encodeURIComponent(raw);
+    };
+    const viaProxy = (u) => proxy ? proxy.replace(/\/+$/, "") + "/?url=" + encodeURIComponent(u) : u;
+
+    function load(u) {
+      cur = u; bu.value = u; bm.innerHTML = "";
+      const f = document.createElement("iframe");
+      f.title = "Page"; f.allow = "camera; microphone; geolocation; fullscreen; clipboard-write; autoplay"; f.src = viaProxy(u);
+      bm.append(f);
+      status(proxy ? "Proxy se khul raha hai." : "Khali ya refuse dikhe toh ↗ dabao, ya ⚙ mein proxy lagao.");
+      star.textContent = marks.some((m) => m.u === u) ? "⭐" : "☆";
+    }
+    function go(raw) {
+      const u = toURL(raw); if (!u) return;
+      hist = hist.slice(0, pos + 1); hist.push(u); pos = hist.length - 1; load(u);
+    }
+    function home() {
+      cur = ""; bu.value = ""; star.textContent = "☆"; bm.innerHTML = ""; status("");
+      bm.append(mk("p", "mute", "Upar search ya website address likho. Engine: " + engine));
+      const g = mk("div", "dials");
+      const add = (icon, name, u, rm) => {
+        const w = mk("div"); w.style.position = "relative";
+        const t = mk("button", "tile"); t.style.width = "100%"; t.append(mk("i", null, icon)); t.append(name);
+        t.addEventListener("click", () => go(u)); w.append(t);
+        if (rm) {
+          const x = mk("button", "dx", "✕"); x.setAttribute("aria-label", "Remove");
+          x.addEventListener("click", () => { marks = marks.filter((m) => m.u !== u); lset("b_marks", marks); home(); });
+          w.append(x);
+        }
+        g.append(w);
+      };
+      DIALS.forEach(([n, i, u]) => add(i, n, u, false));
+      marks.forEach((m) => add("⭐", m.n, m.u, true));
+      bm.append(g);
+    }
+    function toggleMark() {
+      if (!cur) return;
+      const i = marks.findIndex((m) => m.u === cur);
+      if (i >= 0) marks.splice(i, 1);
+      else { let n = cur; try { n = new URL(cur).hostname.replace(/^www\./, ""); } catch (e) {} marks.push({ n, u: cur }); }
+      lset("b_marks", marks); star.textContent = i >= 0 ? "☆" : "⭐";
+    }
+    async function reader() {
+      if (!cur) { status("Pehle koi page kholo."); return; }
+      bm.innerHTML = "";
+      const box = mk("div", "card"); box.style.cssText = "white-space:pre-wrap;font-size:14px;line-height:1.6;overflow:auto;flex:1";
+      box.textContent = "Load ho raha hai..."; bm.append(box);
+      status("Reader mode: page ka text r.jina.ai (third-party) se aata hai.");
+      try {
+        const r = await fetch("https://r.jina.ai/" + cur);
+        if (!r.ok) throw new Error(r.status);
+        const t = (await r.text()).replace(/!\[[^\]]*\]\([^)]*\)/g, "").slice(0, 60000);
+        box.textContent = "";
+        const re = /\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g; let last = 0, m;
+        while ((m = re.exec(t))) {
+          const link = m[2];
+          box.append(t.slice(last, m.index));
+          const a = mk("a", null, m[1]); a.href = link; a.style.color = "var(--accent)";
+          a.addEventListener("click", (e) => { e.preventDefault(); go(link); });
+          box.append(a); last = re.lastIndex;
+        }
+        box.append(t.slice(last));
+      } catch (e) { box.textContent = "Reader mode load nahi hua."; }
+    }
+    function settings() {
+      bm.innerHTML = "";
+      const p = mk("div", "card"); p.style.display = "grid"; p.style.gap = "10px";
+      const er = mk("div", "row");
+      Object.keys(ENG).forEach((n) => { const x = mk("button", n === engine ? "on" : "", n); x.addEventListener("click", () => { engine = n; lset("b_engine", n); settings(); }); er.append(x); });
+      const pi = document.createElement("input"); pi.type = "text"; pi.placeholder = "https://your-proxy.workers.dev"; pi.value = proxy; pi.setAttribute("aria-label", "Proxy URL");
+      const sv = mk("button", "pill", "Save proxy");
+      sv.addEventListener("click", () => { proxy = pi.value.trim(); lset("b_proxy", proxy); status(proxy ? "Proxy save ho gaya." : "Proxy hata diya."); });
+      p.append(mk("b", null, "Search engine"), er, mk("b", null, "Proxy (optional)"), pi, sv,
+        mk("small", "mute", "Google jaisi sites seedha iframe mein block hoti hain. Apna Cloudflare Worker proxy lagaoge toh zyada sites khulengi."));
+      bm.append(p);
+    }
+
+    btn("◀", "Back", () => { if (pos > 0) { pos--; load(hist[pos]); } });
+    btn("▶", "Forward", () => { if (pos < hist.length - 1) { pos++; load(hist[pos]); } });
+    btn("⟳", "Reload", () => { if (cur) load(cur); });
+    btn("🏠", "Home", home);
+    const star = btn("☆", "Bookmark", toggleMark);
+    btn("📖", "Reader mode", reader);
+    btn("↗", "Open in browser", () => { if (cur) window.open(cur, "_blank", "noopener"); });
+    btn("⚙", "Settings", settings);
+    q("#bf", b).addEventListener("submit", (e) => { e.preventDefault(); go(bu.value); });
+    home();
+  }
+  const br = apps.find((a) => a.id === "browser");
+  if (br) br.open = browser;
+})();
+
+</script>
+<script>
+/* Addon loader: addon-1.css, addon-2.css... aur addon-1.js, addon-2.js... apne aap load hoti hain */
+(function () {
+  var MAX = 50;
+  function next(type, n) {
+    if (n > MAX) return;
+    var el, url = "addon-" + n + "." + type + "?v=" + Date.now();
+    if (type === "js") { el = document.createElement("script"); el.src = url; }
+    else { el = document.createElement("link"); el.rel = "stylesheet"; el.href = url; }
+    el.onload = function () { next(type, n + 1); };
+    el.onerror = function () { el.remove(); };
+    document.head.appendChild(el);
+  }
+  next("css", 1);
+  next("js", 1);
+})();
+
+</script>
+</body>
+</html>
